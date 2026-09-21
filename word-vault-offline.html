@@ -1382,24 +1382,6 @@ function noise(t0, dur, vol, hz, q, dest) {
   src.start(t0); src.stop(t0 + dur + .05);
 }
 const midi = n => 440 * Math.pow(2, (n - 69) / 12);
-function bassVoice(freq, t0, dur, vol, dest) {
-  const c = ac(), o = c.createOscillator(), o2 = c.createOscillator(), f = c.createBiquadFilter(), g = c.createGain();
-  o.type = "sawtooth"; o.frequency.value = freq;
-  o2.type = "square"; o2.frequency.value = freq / 2;
-  f.type = "lowpass"; f.frequency.setValueAtTime(1600, t0); f.frequency.exponentialRampToValueAtTime(420, t0 + dur);
-  env(g, t0, .008, dur * .5, vol, dur * .5);
-  o.connect(f); o2.connect(f); f.connect(g); g.connect(dest);
-  o.start(t0); o2.start(t0); o.stop(t0 + dur + .1); o2.stop(t0 + dur + .1);
-}
-function leadVoice(freq, t0, dur, vol, dest, type) {
-  const c = ac(), o = c.createOscillator(), o2 = c.createOscillator(), g = c.createGain();
-  o.type = type || "square"; o.frequency.value = freq;
-  o2.type = "triangle"; o2.frequency.value = freq * 1.005;
-  env(g, t0, .012, dur * .45, vol, dur * .55);
-  o.connect(g); o2.connect(g); g.connect(dest);
-  o.start(t0); o2.start(t0); o.stop(t0 + dur + .1); o2.stop(t0 + dur + .1);
-}
-
 /* ---------- sound effects ---------- */
 function fx(fn) { if (!sfxOn) return; try { fn(ac().currentTime); } catch (e) {} }
 const sfx = {
@@ -1417,7 +1399,7 @@ const sfx = {
     tone(midi(58), t, .16, "square", .13, null, midi(53));
     tone(midi(53), t + .14, .26, "sawtooth", .08, null, midi(46));
   }),
-  tick: () => fx(t => noise(t, .03, .06, 6000, 1)),
+  tick: () => fx(t => noise(t, .035, .05, 2600, 1.2)),
   count: () => fx(t => tone(midi(84), t, .09, "square", .1)),
   /* boss damage: impact + rising fifth, reads as a hit you landed */
   hit: () => fx(t => {
@@ -1464,111 +1446,182 @@ function toggleSfx() {
    Four bars of C–G–Am–F at 120 bpm (140 in the boss fight), all built
    live with oscillators, so the offline file needs no audio files.
    ===================================================================== */
-const MOTIFS = [
-  /* each bar is 16 sixteenths; the numbers are steps above the chord root */
-  [[0,null,4,null,7,null,4,null,0,null,7,null,12,null,7,null],
-   [0,null,3,null,7,null,3,null,10,null,7,null,3,null,0,null],
-   [7,null,4,null,0,null,4,null,7,null,12,null,7,null,4,null],
-   [0,null,7,null,4,null,7,null,12,null,7,null,4,null,0,null]],
-  [[12,null,null,7,null,4,null,7,0,null,null,4,null,7,null,12],
-   [10,null,null,7,null,3,null,7,0,null,null,3,null,7,null,10],
-   [7,null,12,null,null,9,null,7,4,null,7,null,null,0,null,4],
-   [12,null,9,null,7,null,4,null,7,null,4,null,0,null,null,null]],
-  [[0,null,null,null,7,null,null,null,4,null,null,null,12,null,null,null],
-   [3,null,null,null,7,null,null,null,10,null,null,null,7,null,null,null],
-   [12,null,null,7,null,null,4,null,7,null,null,12,null,null,7,null],
-   [0,null,null,4,null,null,7,null,12,null,null,7,null,null,4,null]],
-  [[0,0,null,7,null,7,null,4,0,0,null,7,null,12,null,7],
-   [3,3,null,7,null,7,null,10,3,3,null,7,null,10,null,7],
-   [7,7,null,12,null,9,null,7,4,4,null,7,null,12,null,9],
-   [12,null,7,null,4,null,7,null,0,null,4,null,7,null,12,null]]
+/* =====================================================================
+   MUSIC
+   ---------------------------------------------------------------------
+   Every melodic note is taken from the chord that is sounding, so a
+   minor chord never gets a major third on top of it. Everything goes
+   through a low-pass filter: the point is atmosphere, not brightness.
+   ===================================================================== */
+function voiceBass(freq, t0, dur, vol, dest) {
+  const c = ac(), o = c.createOscillator(), o2 = c.createOscillator(), f = c.createBiquadFilter(), g = c.createGain();
+  o.type = "sawtooth"; o.frequency.value = freq;
+  o2.type = "sine"; o2.frequency.value = freq / 2;
+  f.type = "lowpass"; f.Q.value = .6;
+  f.frequency.setValueAtTime(900, t0); f.frequency.exponentialRampToValueAtTime(280, t0 + dur);
+  env(g, t0, .012, dur * .55, vol, dur * .45);
+  o.connect(f); o2.connect(f); f.connect(g); g.connect(dest);
+  o.start(t0); o2.start(t0); o.stop(t0 + dur + .1); o2.stop(t0 + dur + .1);
+}
+function voiceLead(freq, t0, dur, vol, dest, colour) {
+  const c = ac(), o = c.createOscillator(), o2 = c.createOscillator(), f = c.createBiquadFilter(), g = c.createGain();
+  o.type = colour || "triangle"; o.frequency.value = freq;
+  o2.type = "sine"; o2.frequency.value = freq * 1.004;
+  f.type = "lowpass"; f.frequency.value = colour === "sawtooth" ? 1500 : 2000; f.Q.value = .5;
+  env(g, t0, .02, dur * .5, vol, dur * .5);
+  o.connect(f); o2.connect(f); f.connect(g); g.connect(dest);
+  o.start(t0); o2.start(t0); o.stop(t0 + dur + .12); o2.stop(t0 + dur + .12);
+}
+function voicePad(notes, t0, dur, vol, dest) {
+  notes.forEach((n, i) => {
+    const c = ac(), o = c.createOscillator(), f = c.createBiquadFilter(), g = c.createGain();
+    o.type = i === 0 ? "triangle" : "sine"; o.frequency.value = midi(n);
+    f.type = "lowpass"; f.frequency.value = 1100; f.Q.value = .4;
+    env(g, t0, dur * .35, dur * .5, vol, dur * .25);
+    o.connect(f); f.connect(g); g.connect(dest);
+    o.start(t0); o.stop(t0 + dur + .3);
+  });
+}
+function drumKick(t, vol, dest) { tone(155, t, .18, "sine", vol, dest, 44); noise(t, .035, vol * .18, 110, 1, dest); }
+function drumSnare(t, vol, dest) { noise(t, .14, vol, 1100, .9, dest); noise(t, .05, vol * .4, 2100, 1.4, dest); }
+function drumTom(t, vol, dest) { tone(110, t, .3, "sine", vol, dest, 62); }
+function drumHat(t, vol, dest) { noise(t, .035, vol, 5200, 2.2, dest); }
+
+/* melodies are written as chord degrees: 0 root · 1 third · 2 fifth ·
+   3 root an octave up · 4 third an octave up — never a fixed interval */
+const MELODIES = [
+  [[0,null,null,1,null,null,2,null,3,null,null,2,null,1,null,null],
+   [2,null,null,1,null,null,0,null,1,null,null,2,null,null,null,null],
+   [3,null,null,2,null,null,1,null,2,null,3,null,null,2,null,null],
+   [1,null,null,2,null,null,3,null,2,null,null,1,null,0,null,null]],
+  [[0,null,2,null,null,3,null,2,1,null,null,2,null,null,0,null],
+   [1,null,2,null,null,1,null,0,2,null,null,1,null,null,null,null],
+   [3,null,2,null,null,4,null,3,2,null,null,1,null,null,2,null],
+   [2,null,1,null,null,0,null,1,0,null,null,null,null,null,null,null]],
+  [[0,null,null,null,2,null,null,null,3,null,null,null,2,null,null,null],
+   [1,null,null,null,2,null,null,null,1,null,null,null,0,null,null,null],
+   [2,null,null,null,3,null,null,null,4,null,null,null,3,null,null,null],
+   [1,null,null,null,0,null,null,null,1,null,null,null,2,null,null,null]],
+  [[0,null,1,null,2,null,null,3,null,2,null,1,null,null,0,null],
+   [2,null,1,null,0,null,null,1,null,2,null,3,null,null,2,null],
+   [3,null,2,null,4,null,null,3,null,2,null,1,null,null,2,null],
+   [0,null,2,null,1,null,null,0,null,null,null,null,null,null,null,null]]
 ];
-/* one theme per chamber, so the loop changes every time a door opens */
+/* one theme per chamber · warm registers, no shrill octaves */
 const THEMES = {
-  verb:  { name:"Vault",     tempo:122, wave:"square",   motif:0, oct:12,
-           chords:[[60,64,67],[55,59,62],[57,60,64],[53,57,60]], bass:[36,31,33,29] },
-  tense: { name:"Clockwork", tempo:127, wave:"triangle", motif:1, oct:12,
-           chords:[[57,60,64],[53,57,60],[60,64,67],[55,59,62]], bass:[33,29,36,31] },
-  vocab: { name:"Library",   tempo:112, wave:"triangle", motif:2, oct:12,
-           chords:[[53,57,60],[60,64,67],[50,53,57],[58,62,65]], bass:[29,36,26,34] },
-  order: { name:"Forge",     tempo:129, wave:"square",   motif:3, oct:12,
-           chords:[[50,53,57],[58,62,65],[53,57,60],[60,64,67]], bass:[26,34,29,36] },
-  habit: { name:"Loop",      tempo:118, wave:"square",   motif:0, oct:7,
-           chords:[[55,59,62],[52,55,59],[60,64,67],[57,61,64]], bass:[31,28,36,33] },
-  boss:  { name:"Guardian",  tempo:142, wave:"sawtooth", motif:1, oct:0,
-           chords:[[57,60,64],[53,57,60],[55,59,62],[52,56,59]], bass:[33,29,31,28] }
+  verb:  { name:"Vault",     tempo:104, colour:"triangle", mel:0,
+           chords:[[57,60,64],[53,57,60],[48,52,55],[55,59,62]], bass:[45,41,36,43] },
+  tense: { name:"Clockwork", tempo:112, colour:"triangle", mel:1,
+           chords:[[50,53,57],[46,50,53],[53,57,60],[48,52,55]], bass:[38,34,41,36] },
+  vocab: { name:"Library",   tempo:96,  colour:"sine",     mel:2,
+           chords:[[48,52,55],[57,60,64],[53,57,60],[55,59,62]], bass:[36,45,41,43] },
+  order: { name:"Forge",     tempo:116, colour:"triangle", mel:3,
+           chords:[[52,55,59],[48,52,55],[55,59,62],[50,54,57]], bass:[40,36,43,38] },
+  habit: { name:"Loop",      tempo:108, colour:"triangle", mel:0,
+           chords:[[55,59,62],[52,55,59],[48,52,55],[50,54,57]], bass:[43,40,36,38] }
 };
-const MUSIC = { on:false, timer:null, step:0, nextTime:0, mode:"game", theme:THEMES.verb, bus:null };
+/* the Guardian is not a chamber: a slow minor ostinato that tightens as
+   its hit points fall — A minor moving to its dominant */
+const BOSS = {
+  chords: [[57,60,64],[57,60,64],[53,57,60],[52,56,59]],   /* Am Am F E */
+  bass:   [33, 33, 29, 28]
+};
+const MUSIC = { on:false, timer:null, step:0, nextTime:0, mode:"game", theme:THEMES.verb, bus:null, filter:null, intensity:0 };
 
 function musicBus() {
   if (!MUSIC.bus) {
     const c = ac();
-    MUSIC.bus = c.createGain(); MUSIC.bus.gain.value = .34;
+    MUSIC.bus = c.createGain(); MUSIC.bus.gain.value = .5;
+    const lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 2600; lp.Q.value = .4;
+    const hp = c.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 40;
     const comp = c.createDynamicsCompressor();
-    MUSIC.bus.connect(comp); comp.connect(c.destination);
+    comp.threshold.value = -20; comp.ratio.value = 4; comp.attack.value = .005; comp.release.value = .18;
+    const out = c.createGain(); out.gain.value = .68;
+    /* a short echo rounds off the edges */
+    const dly = c.createDelay(.6), fb = c.createGain(), send = c.createGain();
+    dly.delayTime.value = .26; fb.gain.value = .22; send.gain.value = .18;
+    MUSIC.bus.connect(lp); lp.connect(hp); hp.connect(comp);
+    hp.connect(send); send.connect(dly); dly.connect(fb); fb.connect(dly); dly.connect(comp);
+    comp.connect(out); out.connect(c.destination);
+    MUSIC.filter = lp;
   }
   return MUSIC.bus;
 }
 function currentTempo() {
+  if (MUSIC.mode === "boss") return 88 + Math.round(38 * clamp(MUSIC.intensity, 0, 1));
   const t = MUSIC.theme.tempo;
-  return MUSIC.mode === "focus" ? t - 14 : MUSIC.mode === "calm" ? t - 8 : t;
+  return MUSIC.mode === "focus" ? t - 16 : MUSIC.mode === "calm" ? t - 8 : t;
 }
-/* game  = full groove between questions · focus = quiet thinking music while a
-   team answers · calm = the map · boss = the fight */
+function setMusicIntensity(v) { MUSIC.intensity = clamp(v, 0, 1); }
+
+function scheduleBoss(step, t, bus) {
+  const bar = Math.floor(step / 16) % 4, s = step % 16, i = clamp(MUSIC.intensity, 0, 1);
+  const chord = BOSS.chords[bar], root = BOSS.bass[bar];
+  /* heartbeat: two low hits, closer together as the fight goes on */
+  if (s === 0) { drumTom(t, .8, bus); drumKick(t, .9, bus); }
+  if (s === 3) drumKick(t + .01, .45 + .25 * i, bus);
+  if (s === 8) { drumTom(t, .6, bus); if (i > .35) drumKick(t, .6, bus); }
+  if (s === 11 && i > .35) drumKick(t + .01, .4, bus);
+  if (i > .6 && s % 4 === 2) drumHat(t, .05, bus);
+  /* pedal bass: relentless, never bright */
+  if (s % 2 === 0) voiceBass(midi(root), t, .22, .42, bus);
+  if (s === 14 && i > .5) voiceBass(midi(root + 7), t, .2, .35, bus);
+  /* dark pad, one chord per bar */
+  if (s === 0) voicePad(chord, t, 1.6, .08 + .03 * i, bus);
+  /* ostinato built from the chord itself, low register */
+  const OST = [0, null, null, 1, null, null, 2, null, null, 1, null, null, 0, null, null, null];
+  const d = OST[s];
+  if (d != null) voiceLead(midi(chord[d] - 12), t, .3, .11 + .05 * i, bus, "sawtooth");
+  /* a slow rise across the bar keeps the pressure up */
+  if (s === 0 && i > .3) {
+    const c = ac(), o = c.createOscillator(), f = c.createBiquadFilter(), g = c.createGain();
+    o.type = "sine"; o.frequency.setValueAtTime(midi(chord[0] - 24), t);
+    o.frequency.exponentialRampToValueAtTime(midi(chord[0] - 12), t + 1.5);
+    f.type = "lowpass"; f.frequency.value = 700;
+    env(g, t, .5, .6, .06 * i, .4);
+    o.connect(f); f.connect(g); g.connect(bus);
+    o.start(t); o.stop(t + 1.8);
+  }
+}
 function scheduleStep(step, t) {
-  const bus = musicBus(), th = MUSIC.theme;
+  const bus = musicBus();
+  if (MUSIC.mode === "boss") return scheduleBoss(step, t, bus);
+  const th = MUSIC.theme;
   const cycle = Math.floor(step / 16) % 8, bar = cycle % 4, second = cycle >= 4, s = step % 16;
   const chord = th.chords[bar], root = th.bass[bar];
-  const mode = MUSIC.mode, boss = mode === "boss", focus = mode === "focus", calm = mode === "calm";
-  const full = mode === "game" || boss;
+  const mode = MUSIC.mode, focus = mode === "focus", calm = mode === "calm", full = mode === "game";
 
   /* drums */
   if (full) {
-    if (s % 4 === 0) { tone(160, t, .16, "sine", .95, bus, 42); noise(t, .05, .3, 90, 1, bus); }
-    if (s === 4 || s === 12) { noise(t, .16, .55, 1700, .6, bus); noise(t, .06, .3, 3200, .8, bus); }
-    if (s % 2 === 0) noise(t, .045, s % 4 === 2 ? .2 : .11, 9000, 1, bus);
-    if (boss && s % 2 === 1) noise(t, .03, .08, 11000, 1, bus);
-    /* a short fill closes every eight bars */
-    if (second && bar === 3 && s >= 12) noise(t, .07, .35, 2200 + (s - 12) * 500, .7, bus);
+    if (s === 0 || s === 8) drumKick(t, .85, bus);
+    if (s === 4 || s === 12) drumSnare(t, .3, bus);
+    if (s % 4 === 2) drumHat(t, .07, bus);
+    if (second && bar === 3 && s >= 12) drumTom(t, .3, bus);
   } else if (calm) {
-    if (s === 0) tone(150, t, .18, "sine", .5, bus, 45);
-    if (s % 4 === 2) noise(t, .04, .07, 9000, 1, bus);
+    if (s === 0) drumKick(t, .45, bus);
+    if (s === 8) drumHat(t, .04, bus);
   } else if (focus) {
-    if (s === 0) tone(140, t, .22, "sine", .32, bus, 48);
-    if (s === 8) noise(t, .05, .05, 7000, 1, bus);
+    if (s === 0) drumKick(t, .3, bus);
   }
 
   /* bass */
-  if (full && s % 2 === 0) bassVoice(midi((s === 6 || s === 14) ? root + 7 : root), t, .21, .5, bus);
-  else if (calm && s % 4 === 0) bassVoice(midi(root), t, .38, .32, bus);
-  else if (focus && s === 0) bassVoice(midi(root), t, .9, .22, bus);
+  if (full && (s === 0 || s === 6 || s === 8 || s === 14)) voiceBass(midi(s === 14 ? root + 7 : root), t, .3, .42, bus);
+  else if (calm && s === 0) voiceBass(midi(root), t, .5, .3, bus);
+  else if (focus && s === 0) voiceBass(midi(root), t, .9, .22, bus);
 
-  /* chords: stabs when the game moves, a long pad while the team thinks */
-  if (full && (s === 2 || s === 6 || s === 10 || s === 14))
-    chord.forEach(n => leadVoice(midi(n + (boss ? 0 : 12)), t, .2, .13, bus, "square"));
-  if (calm && s === 0)
-    chord.forEach(n => leadVoice(midi(n + 12), t, .9, .07, bus, "triangle"));
-  if (focus && (s === 0 || s === 8))
-    chord.forEach(n => leadVoice(midi(n + 12), t, 1.1, .055, bus, "sine"));
+  /* chords: a pad, one per bar — no stabs, nothing percussive */
+  if (s === 0) voicePad(chord, t, full ? 1.1 : 1.8, full ? .075 : focus ? .05 : .06, bus);
 
-  /* arpeggio */
-  if (full && s % 2 === 1) leadVoice(midi(chord[(s >> 1) % chord.length] + 12), t, .12, .07, bus, "triangle");
-  if (calm && s % 4 === 1) leadVoice(midi(chord[(s >> 2) % chord.length] + 12), t, .2, .05, bus, "triangle");
-  if (focus && s % 8 === 4) leadVoice(midi(chord[(step >> 3) % chord.length] + 24), t, .5, .035, bus, "sine");
-
-  /* melody — silent while the team is thinking */
+  /* melody, always built from chord tones · silent while a team thinks */
   if (!focus) {
-    const motif = MOTIFS[th.motif][bar];
-    let off = motif[s];
-    if (off != null) {
-      if (second) off = (s % 4 === 0) ? off + 5 : null;   /* second half answers the first */
-      if (off != null) {
-        const vol = boss ? .2 : calm ? .09 : .17;
-        leadVoice(midi(chord[0] + th.oct + off), t, calm ? .3 : .26, vol, bus, calm ? "triangle" : th.wave);
-      }
+    const pat = MELODIES[th.mel][bar];
+    let deg = pat[s];
+    if (deg != null && second && s % 4 !== 0) deg = null;      /* second half breathes */
+    if (deg != null) {
+      const note = deg < 3 ? chord[deg] : chord[deg - 3] + 12;
+      voiceLead(midi(note), t, calm ? .5 : .34, calm ? .07 : .105, bus, calm ? "sine" : th.colour);
     }
   }
-  if (boss && s === 0) bassVoice(midi(root - 12), t, .55, .4, bus);
 }
 function musicLoop() {
   const c = ac(), spb = 60 / currentTempo() / 4;
@@ -1585,26 +1638,26 @@ function startMusic(mode) {
     const c = ac();
     MUSIC.on = true; musicOn = true;
     MUSIC.step = 0; MUSIC.nextTime = c.currentTime + .06;
-    musicBus().gain.setTargetAtTime(.34, c.currentTime, .3);
+    musicBus().gain.setTargetAtTime(.5, c.currentTime, .4);
     MUSIC.timer = setInterval(musicLoop, 25);
     paintMusicButton();
   } catch (e) { MUSIC.on = false; }
 }
 function stopMusic() {
   clearInterval(MUSIC.timer); MUSIC.timer = null; MUSIC.on = false;
-  if (MUSIC.bus) try { MUSIC.bus.gain.setTargetAtTime(0.0001, ac().currentTime, .1); } catch (e) {}
+  if (MUSIC.bus) try { MUSIC.bus.gain.setTargetAtTime(0.0001, ac().currentTime, .15); } catch (e) {}
   paintMusicButton();
 }
 function setMusicMode(mode) { MUSIC.mode = mode; }
 function setMusicTheme(id) {
   const th = THEMES[id];
+  if (id === "boss") { MUSIC.step = 0; return; }
   if (!th || th === MUSIC.theme) return;
-  MUSIC.theme = th;
-  MUSIC.step = 0;                       /* a new chamber starts its loop clean */
+  MUSIC.theme = th; MUSIC.step = 0;
 }
 function duckMusic(on) {
   if (!MUSIC.bus) return;
-  try { MUSIC.bus.gain.setTargetAtTime(on ? .07 : .34, ac().currentTime, .12); } catch (e) {}
+  try { MUSIC.bus.gain.setTargetAtTime(on ? .1 : .5, ac().currentTime, .15); } catch (e) {}
 }
 function paintMusicButton() {
   const b = $("btnMusic"); if (!b) return;
@@ -2505,6 +2558,7 @@ function startBoss() {
   const L = LENGTHS.find(x => x.id === S.length);
   S.boss.maxHp = S.teams.length * (30 + L.per * 12);
   S.boss.hp = S.boss.maxHp; S.boss.turns = 0; S.boss.alive = true;
+  setMusicIntensity(0);
   S.bossQueue = shuffle(S.rooms.flatMap(id => poolFor(id, S.level))).slice(0, S.teams.length * 8);
   setMusicTheme("boss"); setMusicMode("boss");
   screenTo("screenBoss");
@@ -2517,6 +2571,7 @@ function startBoss() {
 }
 function paintBoss() {
   const pct = clamp(S.boss.hp / S.boss.maxHp, 0, 1) * 100;
+  setMusicIntensity(1 - pct / 100);
   $("bossHpBar").style.width = pct + "%";
   $("bossHpText").textContent = Math.max(0, Math.ceil(S.boss.hp)) + " / " + S.boss.maxHp;
   $("bossEmoji").textContent = pct > 66 ? "📜" : pct > 33 ? "👹" : "💀";

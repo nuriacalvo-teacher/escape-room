@@ -40,13 +40,15 @@ sale a la pizarra por turnos.
 
 **Teclado:** `1–4` o `A–D` responder · `Enter` enviar · `Espacio` continuar · `H` usar el poder.
 
-**Sonido:** la música la genera el propio navegador, y **cada cámara tiene su tema**
-(acordes, melodía y tempo distintos: 112 a 129 pulsaciones por minuto), así que cambia
-cada vez que se abre una puerta. Mientras un equipo piensa la respuesta baja a una
-**música de espera** más lenta y sin melodía, para no agobiar; vuelve el ritmo completo
-entre pregunta y pregunta, y el Guardián trae su propio tema a 142. También baja de
-volumen sola en los dictados. Los botones ♪ y 🔊 de la cabecera apagan música y efectos
-por separado.
+**Sonido:** la música la genera el propio navegador y **cada cámara tiene su tema**
+(96 a 116 pulsaciones por minuto, acordes y melodía distintos), así que cambia cada vez
+que se abre una puerta. Todo va filtrado en graves: las melodías se construyen con las
+notas del acorde que suena, nunca con intervalos fijos, y no hay timbres agudos ni
+platillos brillantes. Mientras un equipo piensa baja a una **música de espera** lenta y
+sin melodía; el **Guardián** tiene su propio material —ostinato menor, pedal grave y
+latido— que **se acelera de 88 a 126 pulsaciones conforme le queda menos vida**, para que
+el final tense de verdad. También baja de volumen sola en los dictados. Los botones ♪ y 🔊
+de la cabecera apagan música y efectos por separado.
 
 ---
 
