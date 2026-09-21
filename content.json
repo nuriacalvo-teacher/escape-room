@@ -1,0 +1,23 @@
+{
+  "name": "Extra content",
+  "version": 1,
+  "updated": "2026-09-21",
+  "_howto": "Add questions to the items[] list below, commit this file to GitHub, and the game will load them automatically the next time it is opened. Nothing else has to change.",
+  "_fields": {
+    "r": "chamber: verb | tense | vocab | order | habit",
+    "t": "format: mcq | gap | forms | order | scramble | vowels | listen",
+    "q": "the question. For a gap use ___ where the word is missing",
+    "o": "multiple choice options, CORRECT ONE FIRST (they are shuffled on screen)",
+    "a": "accepted answers for typed formats, e.g. [\"doesn't work\", \"does not work\"]",
+    "lv": "class levels that see it: [1,6] = 1º ESO to 2º Bach",
+    "tip": "the feedback shown after the answer",
+    "sub": "small heading above the question",
+    "em": "an emoji",
+    "hint": "for gap questions, the base verb shown in brackets"
+  },
+  "_examples": [
+    { "r": "vocab", "t": "mcq", "q": "Which word means a person who travels to work every day?", "o": ["commuter", "customer", "colleague", "coach"], "lv": [4, 6], "tip": "A commuter travels between home and work.", "sub": "Extra vocabulary", "em": "🚆" },
+    { "r": "tense", "t": "gap", "q": "She ___ in this school since 2019.", "a": ["has worked", "has been working"], "hint": "work", "lv": [4, 6], "tip": "Since + a point in time → present perfect.", "sub": "Present Perfect", "em": "🧪" }
+  ],
+  "items": []
+}
