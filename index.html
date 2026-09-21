@@ -2702,7 +2702,7 @@ function quitToSetup() {
    ===================================================================== */
 const ROOM_IDS = ROOMS.map(r => r.id);
 const BUILT_IN_APPS = ["irregular-verbs", "present-tenses", "battles", "sentence-formation", "habits"];
-const SKIP_APPS = ["app", "prueba", "prueba-basica", "pasarlista", "control", "patrimonio_IES_Goya"];
+const SKIP_APPS = ["app", "escape-room", "word-vault", "prueba", "prueba-basica", "pasarlista", "control", "patrimonio_IES_Goya"];
 let EXTRA_ITEMS = [], CUSTOM_ITEMS = [], EXTRA_COUNT = 0, EXTRA_SOURCES = [], EXTRA_FILE_FOUND = false;
 let PORTAL_APPS = [], PORTAL_BUSY = false;
 
@@ -2789,7 +2789,9 @@ function grabConst(html, name, open) {
 }
 const LEVEL_INDEX = { "1º eso":1, "2º eso":2, "3º eso":3, "4º eso":4, "1º bach":5, "2º bach":6, "b1":4, "b2":6 };
 function levelsOf(app) {
-  const ls = (app.levels || []).map(l => LEVEL_INDEX[String(l).toLowerCase().trim()]).filter(Boolean);
+  const raw = Array.isArray(app.levels) ? app.levels : (app.levels ? [app.levels] : []);
+  if (raw.some(l => /all levels|todos los niveles/i.test(String(l)))) return [1, 6];
+  const ls = raw.map(l => LEVEL_INDEX[String(l).toLowerCase().trim()]).filter(Boolean);
   if (!ls.length) return [2, 6];
   return [Math.min.apply(null, ls), Math.max.apply(null, ls)];
 }
@@ -2931,10 +2933,15 @@ async function scanPortal(manual) {
     const res = await fetch("/apps.json?v=" + Date.now());
     if (!res.ok) throw 0;
     const portal = await res.json();
-    const apps = (portal.apps || []).filter(a =>
-      a.visible !== false && a.status !== "soon" && a.url &&
-      BUILT_IN_APPS.indexOf(a.id) < 0 && SKIP_APPS.indexOf(a.id) < 0 &&
-      ["tools"].indexOf(a.category) < 0);
+    const here = location.pathname.replace(/[^/]*$/, "");
+    const apps = (portal.apps || []).filter(a => {
+      if (a.visible === false || a.status === "soon" || !a.url) return false;
+      if (BUILT_IN_APPS.indexOf(a.id) >= 0 || SKIP_APPS.indexOf(a.id) >= 0) return false;
+      if (["tools"].indexOf(a.category) >= 0) return false;
+      let path = a.url;
+      try { path = new URL(a.url, location.href).pathname; } catch (e) {}
+      return path.replace(/[^/]*$/, "") !== here;          /* never read this game itself */
+    });
     PORTAL_APPS = apps;
     let added = 0, scanned = 0;
     const budget = manual ? apps.length : 4;
