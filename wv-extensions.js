@@ -3,7 +3,7 @@
    4 podium shows student name, result and topics worked.
    Load it with ONE line before </body>:  <script src="wv-extensions.js"></script> */
 (() => {
-const W = { mode: "teams", first: "", last: "", cls: "knight", lvl: .7, off: new Set(), playing: false, topics: new Map(), bk: null, timer: null };
+const W = { mode: "teams", first: "", last: "", cls: "knight", lvl: "normal", off: new Set(), playing: false, topics: new Map(), bk: null, timer: null };
 try { W.off = new Set(JSON.parse(localStorage.getItem("wv_off") || "[]")); W.mode = localStorage.getItem("wv_mode") || "teams"; } catch (e) {}
 const persist = () => { try { localStorage.setItem("wv_off", JSON.stringify([...W.off])); localStorage.setItem("wv_mode", W.mode); } catch (e) {} };
 const BASE = { verb: "Irregular verbs", tense: "Present tenses", order: "Word order", habit: "Habits (used to)" };
@@ -29,29 +29,112 @@ window.mergeItems = (list, label) => { const b = EXTRA_ITEMS.length; const n = _
 const _custom = parseCustomWords;
 window.parseCustomWords = () => { _custom(); CUSTOM_ITEMS.forEach(i => i.src = "Our own words"); renderSetup(); };
 
-/* ---------- vocab.json: topics written by the teacher ---------- */
+/* ---------- vocab topics: vocab.json (GitHub) + the teacher's editor (this browser) ---------- */
+const GH_EDIT = "https://github.com/nuriacalvo-teacher/escape-room/edit/main/vocab.json";
+W.fileTopics = []; W.localTopics = [];
+try { W.localTopics = JSON.parse(localStorage.getItem("wv_topics") || "[]"); } catch (e) {}
+const saveLocal = () => { try { localStorage.setItem("wv_topics", JSON.stringify(W.localTopics)); } catch (e) {} };
+const allTopics = () => { const m = new Map(); W.fileTopics.forEach(t => m.set(t.name, t)); W.localTopics.forEach(t => m.set(t.name, t)); return [...m.values()].filter(t => !t.deleted); };
 const parseWord = x => typeof x === "string"
   ? (p => ({ w: p[0].trim(), clue: (p[1] || "").trim(), hard: x.trim()[0] === "*" }))(x.replace(/^\s*\*/, "").split("|"))
   : { w: String(x.w || x.word || "").trim(), clue: String(x.clue || x.meaning || "").trim(), hard: !!x.hard };
-async function loadTopics() {
-  try {
-    const r = await fetch("vocab.json?v=" + Date.now()); if (!r.ok) return;
-    const d = await r.json(), topics = d.topics || [];
-    const all = topics.flatMap(t => (t.words || []).map(parseWord)).filter(x => x.w);
-    topics.forEach(t => {
-      const ws = (t.words || []).map(parseWord).filter(x => x.w), lv = t.level || [1, 6];
-      const pool = ws.length >= 4 ? ws : all;
-      const items = ws.map(x => {
-        const wrong = shuffle(pool.filter(y => y.w !== x.w)).slice(0, 3).map(y => y.w);
-        if (wrong.length < 3) return null;
-        return { r: "vocab", t: "mcq", w: x.w, o: [x.w, ...wrong], em: t.emoji || "📖", sub: t.name,
-          q: x.clue ? `Which word means “${x.clue}”?` : `Topic “${t.name}”: which word starts with “${x.w[0]}” and has ${x.w.length} letters?`,
-          tip: x.w + (x.clue ? " — " + x.clue : ""), lv: x.hard ? [Math.max(4, lv[0]), 6] : lv };
-      }).filter(Boolean);
-      if (items.length) mergeItems(items, "Topic: " + t.name);
-    });
-  } catch (e) { /* no vocab.json yet */ }
+function rebuildTopics() {
+  for (let i = EXTRA_ITEMS.length - 1; i >= 0; i--) if (/^Topic: /.test(EXTRA_ITEMS[i].src || "")) EXTRA_ITEMS.splice(i, 1);
+  for (let i = EXTRA_SOURCES.length - 1; i >= 0; i--) if (/^Topic: /.test(EXTRA_SOURCES[i])) EXTRA_SOURCES.splice(i, 1);
+  rebuildBank();
+  const topics = allTopics();
+  const all = topics.flatMap(t => (t.words || []).map(parseWord)).filter(x => x.w);
+  topics.forEach(t => {
+    const ws = (t.words || []).map(parseWord).filter(x => x.w), lv = t.level || [1, 6];
+    const pool = ws.length >= 4 ? ws : all;
+    const items = ws.map(x => {
+      const wrong = shuffle(pool.filter(y => y.w !== x.w)).slice(0, 3).map(y => y.w);
+      if (wrong.length < 3) return null;
+      return { r: "vocab", t: "mcq", w: x.w, o: [x.w, ...wrong], em: t.emoji || "📖", sub: t.name,
+        q: x.clue ? `Which word means “${x.clue}”?` : `Topic “${t.name}”: which word starts with “${x.w[0]}” and has ${x.w.length} letters?`,
+        tip: x.w + (x.clue ? " — " + x.clue : ""), lv: x.hard ? [Math.max(4, lv[0]), 6] : lv };
+    }).filter(Boolean);
+    if (items.length) mergeItems(items, "Topic: " + t.name);
+  });
+  if ($("wvEditor")) fillEditor();
   renderSetup();
+}
+async function loadTopics() {
+  try { const r = await fetch("vocab.json?v=" + Date.now()); if (r.ok) W.fileTopics = (await r.json()).topics || []; } catch (e) {}
+  rebuildTopics();
+}
+/* ----- the editor (teacher) ----- */
+const wordsText = t => (t.words || []).map(w => typeof w === "string" ? w : (w.hard ? "*" : "") + (w.w || w.word) + ((w.clue || w.meaning) ? " | " + (w.clue || w.meaning) : "")).join("\n");
+const exportJson = () => JSON.stringify({ name: "Vocabulary topics",
+  _howto: "Each topic is one block inside topics[]. Words are written as: word | clue. Put * before a harder (B2) word. Minimum 4 words per topic.",
+  topics: allTopics() }, null, 2);
+function fillEditor(pick) {
+  const sel = $("edSel"), keep = pick != null ? pick : sel.value;
+  const local = new Set(W.localTopics.filter(t => !t.deleted).map(t => t.name));
+  sel.innerHTML = `<option value="">➕ New topic</option>` + allTopics().map(t => `<option value="${esc(t.name)}">${local.has(t.name) ? "✏️ " : ""}${esc(t.name)}</option>`).join("");
+  sel.value = keep; if (sel.value !== keep) sel.value = "";
+  const t = allTopics().find(x => x.name === sel.value);
+  $("edName").value = t ? t.name : ""; $("edEmoji").value = t ? (t.emoji || "") : "";
+  $("edMin").value = t && t.level ? t.level[0] : 1; $("edMax").value = t && t.level ? t.level[1] : 6;
+  $("edWords").value = t ? wordsText(t) : "";
+}
+function editor(before) {
+  if ($("wvEditor")) return;
+  const c = "bg-slate-900 border-2 border-slate-700 focus:border-amber-400 rounded-xl px-3 py-2 font-bold text-white outline-none";
+  const b = (id, t, k) => `<button id="${id}" class="${k} font-black px-4 py-2 rounded-xl transition text-sm">${t}</button>`;
+  const d = el("details", "bg-slate-900/70 backdrop-blur border border-slate-700 rounded-3xl p-5 md:p-7"); d.id = "wvEditor";
+  d.innerHTML = `<summary class="cursor-pointer text-xl md:text-2xl font-black text-white">🧑‍🏫 Teacher: vocabulary editor</summary>
+    <div class="space-y-3 mt-4">
+    <p class="text-sm text-slate-400 font-bold">Write your topics here and play them straight away. When you are happy, press “Publish on GitHub” so every student gets them.</p>
+    <div class="grid sm:grid-cols-4 gap-2">
+      <select id="edSel" class="${c} sm:col-span-2"></select>
+      <input id="edName" placeholder="Topic name" maxlength="30" class="${c} sm:col-span-2">
+      <input id="edEmoji" placeholder="Emoji" maxlength="4" class="${c}">
+      <select id="edMin" class="${c}">${LEVELS.map((l, i) => `<option value="${i + 1}">from ${l}</option>`).join("")}</select>
+      <select id="edMax" class="${c} sm:col-span-2">${LEVELS.map((l, i) => `<option value="${i + 1}" ${i === 5 ? "selected" : ""}>to ${l}</option>`).join("")}</select>
+    </div>
+    <textarea id="edWords" rows="9" spellcheck="false" class="w-full bg-slate-950 border-2 border-slate-700 focus:border-amber-400 rounded-2xl px-4 py-3 font-bold text-slate-200 outline-none text-sm" placeholder="one word per line:  word | clue in English&#10;*hard word | clue  (the * marks a B2 word)&#10;At least 4 words."></textarea>
+    <div class="flex flex-wrap gap-2">
+      ${b("edSave", "💾 Save topic", "bg-emerald-500 hover:bg-emerald-400 text-slate-950")}
+      ${b("edDel", "🗑️ Delete topic", "bg-slate-800 hover:bg-slate-700 text-rose-300")}
+      ${b("edCopy", "📋 Copy vocab.json", "bg-slate-800 hover:bg-slate-700 text-sky-300")}
+      ${b("edDl", "⬇️ Download", "bg-slate-800 hover:bg-slate-700 text-sky-300")}
+      ${b("edGh", "🚀 Publish on GitHub", "bg-amber-500 hover:bg-amber-400 text-slate-950")}
+    </div>
+    <p id="edMsg" class="text-sm md:text-base font-bold text-emerald-300"></p></div>`;
+  before.parentNode.insertBefore(d, before);
+  const msg = (t, bad) => { const m = $("edMsg"); m.textContent = t; m.className = "text-sm md:text-base font-bold " + (bad ? "text-rose-300" : "text-emerald-300"); };
+  const copy = async () => { try { await navigator.clipboard.writeText(exportJson()); return true; } catch (e) { return false; } };
+  fillEditor();
+  $("edSel").onchange = () => fillEditor();
+  $("edSave").onclick = () => {
+    const name = $("edName").value.trim(), words = $("edWords").value.split("\n").map(x => x.trim()).filter(Boolean);
+    let lo = +$("edMin").value, hi = +$("edMax").value; if (lo > hi) [lo, hi] = [hi, lo];
+    if (!name) return msg("Write a topic name first.", 1);
+    if (words.filter(x => parseWord(x).w).length < 4) return msg("A topic needs at least 4 words.", 1);
+    W.localTopics = W.localTopics.filter(t => t.name !== name);
+    W.localTopics.push({ name, emoji: $("edEmoji").value.trim() || "📖", level: [lo, hi], words });
+    saveLocal(); rebuildTopics(); fillEditor(name);
+    msg("✅ Saved and ready to play. To publish it for everybody, press “Publish on GitHub”.");
+  };
+  $("edDel").onclick = () => {
+    const name = $("edSel").value; if (!name) return msg("Choose a topic to delete.", 1);
+    if (!confirm("Delete the topic “" + name + "”? It disappears for everybody once you publish.")) return;
+    W.localTopics = W.localTopics.filter(t => t.name !== name); W.localTopics.push({ name, deleted: true });
+    saveLocal(); rebuildTopics(); fillEditor(""); msg("Topic deleted. Press “Publish on GitHub” to make it final.");
+  };
+  $("edCopy").onclick = async () => msg((await copy()) ? "📋 vocab.json copied." : "Could not copy — use Download.", 0);
+  $("edDl").onclick = () => {
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([exportJson()], { type: "application/json" }));
+    a.download = "vocab.json"; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    msg("⬇️ vocab.json downloaded.");
+  };
+  $("edGh").onclick = async () => {
+    const ok = await copy();
+    window.open(GH_EDIT, "_blank");
+    msg(ok ? "📋 Copied! On the GitHub page: click inside the text, press Ctrl+A then Ctrl+V (Cmd on Mac), then press “Commit changes”."
+           : "GitHub opened, but the copy failed: press “Download” and upload that file instead.", !ok);
+  };
 }
 
 /* ---------- setup screen ---------- */
@@ -73,12 +156,12 @@ function paint() {
      <div class="grid grid-cols-2 gap-3">${mb("teams", "👥 Teams (whole class)")}${mb("solo", "🧑‍🎓 Solo vs the machine")}</div>` +
     (W.mode === "solo" ? `<div class="grid sm:grid-cols-2 gap-3">${inp("wvFirst", "Name", W.first)}${inp("wvLast", "Surname", W.last)}
        ${sel("wvCls", CLASSES.map(c => [c.id, c.emoji + " " + c.name + " · " + c.power]), W.cls)}
-       ${sel("wvLvl", [[.5, "🤖 Machine: easy"], [.7, "🤖 Machine: normal"], [.88, "🤖 Machine: hard"]], W.lvl)}</div>
+       ${sel("wvLvl", [["easy", "🐢 Machine: easy (slower, fewer points)"], ["normal", "🤖 Machine: normal"], ["hard", "🐇 Machine: hard (fast, more points)"]], W.lvl)}</div>
        <p class="text-sm font-bold text-slate-400">Your name and surname will appear on the final podium.</p>` : ""));
   mc.querySelectorAll("[data-m]").forEach(b => b.onclick = () => { W.mode = b.dataset.m; persist(); renderSetup(); sfx.tick(); });
   if (W.mode === "solo") {
     $("wvFirst").oninput = e => W.first = e.target.value; $("wvLast").oninput = e => W.last = e.target.value;
-    $("wvCls").onchange = e => W.cls = e.target.value; $("wvLvl").onchange = e => W.lvl = +e.target.value;
+    $("wvCls").onchange = e => W.cls = e.target.value; $("wvLvl").onchange = e => W.lvl = e.target.value;
   }
   /* content picker */
   const m = new Map();
@@ -98,6 +181,7 @@ function paint() {
   cc.querySelectorAll("[data-i]").forEach(b => b.onclick = () => { const k = srcs[+b.dataset.i].key; W.off.has(k) ? W.off.delete(k) : W.off.add(k); persist(); renderSetup(); sfx.tick(); });
   cc.querySelectorAll("[data-g]").forEach(b => b.onclick = () => { const [g, v] = b.dataset.g.split(":"); srcs.filter(s => s.g === g).forEach(s => v === "1" ? W.off.delete(s.key) : W.off.add(s.key)); persist(); renderSetup(); });
   cc.querySelectorAll("[data-p]").forEach(b => b.onclick = () => { const p = b.dataset.p; set(s => p === "all" || (p === "voc" ? s.g === "voc" : s.g !== "voc")); });
+  editor(roomsCard);
   /* optional player names per team */
   if (W.mode === "teams") Array.from($("teamList").children).forEach((row, i) => {
     if (!S.teams[i]) return;
@@ -154,13 +238,16 @@ window.askQuestion = function (item) {
 function botPlay(t, q) {
   document.querySelectorAll("#qArea button, #qArea input, #powerRow button").forEach(e => e.disabled = true);
   $("powerRow").innerHTML = "<span class='text-lg font-black text-slate-400 animate-pulse'>🤖 The machine is thinking…</span>";
-  const max = S.qTime ? S.qTime * 600 : 5000;
+  /* the machine never fails: its level is its SPEED. The sooner it answers, the more points it earns. */
+  const R = { easy: [.55, .8], normal: [.3, .5], hard: [.1, .22] }[W.lvl] || [.3, .5];
+  const f = R[0] + Math.random() * (R[1] - R[0]);          /* share of the time already used */
+  const noLimit = !S.qTime, T = noLimit ? 20 : S.qTime;
   W.timer = setTimeout(() => {
     if (S.answered || S.current !== q || activeTeam() !== t || !W.playing || S.mode === "end") return;
-    const ok = Math.random() < W.lvl;
-    const given = q.t === "mcq" ? (ok ? q.o[0] : q.o[1 + Math.floor(Math.random() * (q.o.length - 1))]) : (ok ? correctAnswerText(q) : "…");
-    judge(ok, given, q, $("qArea"));
-  }, Math.min(max, 1800 + Math.random() * 2600));
+    const given = q.t === "mcq" ? q.o[0] : correctAnswerText(q);
+    if (noLimit) { S.qTime = 1; S.qTotal = 100; S.qLeft = Math.round((1 - f) * 100); }   /* gives the speed bonus even with no time limit */
+    try { judge(true, given, q, $("qArea")); } finally { if (noLimit) S.qTime = 0; }
+  }, Math.max(1200, f * T * 1000));
 }
 
 /* ---------- podium: name, result and topics ---------- */
