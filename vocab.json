@@ -1,0 +1,50 @@
+{
+  "name": "Vocabulary topics",
+  "_howto": "Each topic is one block inside topics[]. Copy a block, change the name and the words. One word per line as text: word | clue. Put * before a word if it is harder (B2). Minimum 4 words per topic. Commas between blocks and between words, none after the last one.",
+  "topics": [
+    {
+      "name": "Jobs",
+      "emoji": "👩‍🏫",
+      "level": [2, 5],
+      "words": [
+        "nurse | a person who looks after sick people in a hospital",
+        "plumber | a person who repairs water pipes",
+        "lawyer | a person who gives legal advice in court",
+        "electrician | a person who fits and repairs electric wires",
+        "firefighter | a person who puts out fires",
+        "architect | a person who designs buildings",
+        "*accountant | a person who keeps financial records",
+        "*surgeon | a doctor who operates on patients"
+      ]
+    },
+    {
+      "name": "Technology",
+      "emoji": "💻",
+      "level": [3, 6],
+      "words": [
+        "screen | the flat part of a phone or computer where you see things",
+        "keyboard | the set of keys you use to type",
+        "download | to copy a file from the internet to your device",
+        "password | a secret word that lets you enter an account",
+        "charger | you use it to put energy into a phone battery",
+        "*software | the programs that run on a computer",
+        "*cybersecurity | protection of computers from online attacks",
+        "*algorithm | a set of steps a computer follows to solve a problem"
+      ]
+    },
+    {
+      "name": "Weather",
+      "emoji": "⛅",
+      "level": [1, 4],
+      "words": [
+        "cloudy | with a lot of clouds in the sky",
+        "foggy | with thick white air close to the ground, so you can't see far",
+        "windy | with a lot of wind",
+        "thunderstorm | heavy rain with loud noises and lightning",
+        "freezing | extremely cold",
+        "*drought | a long period with no rain",
+        "*heatwave | a period of very hot weather"
+      ]
+    }
+  ]
+}
