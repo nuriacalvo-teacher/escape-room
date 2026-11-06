@@ -166,6 +166,39 @@
         "*try on | to put on a garment to check if it fits or looks good before buying (probarse ropa)",
         "*undo | to unfasten the buttons, zip, or straps of a garment (desabrochar)"
       ]
+    },
+    {
+      "name": "Word fields",
+      "emoji": "🤓",
+      "level": [
+        1,
+        6
+      ],
+      "words": [
+        "performance | an act of presenting a play, concert, or show, or how well someone does a job (actuación, representación; rendimiento)",
+        "performer | an actor, musician, or entertainer who performs for an audience (artista, intérprete, actor/actriz)",
+        "perform a task | to carry out or complete a specific piece of work (llevar a cabo / realizar una tarea)",
+        "perform well | to accomplish something successfully or function effectively (rendir bien, trabajar bien)",
+        "performing arts | creative activities performed in front of an audience, such as drama, music, and dance (artes escénicas)",
+        "end | to bring something to a conclusion or reach a final point (terminar, finalizar, poner fin a)",
+        "finish | to complete an activity, task, or process (acabar, terminar)",
+        "grow bored of | to gradually lose interest in something (aburrirse de, empezar a aburrirse de)",
+        "grow tired of | to lose patience or enthusiasm for something over time (cansarse de, hartarse de)",
+        "grow old | to age or become older as time passes (envejecer, hacerse mayor)",
+        "grow up | to develop from a child into an adult (crecer, hacerse mayor)",
+        "grow a beard | to allow facial hair to grow (dejarse barba)",
+        "grow a business | to expand or develop a company or enterprise (hacer crecer / expandir un negocio)",
+        "lose | to be deprived of something, or to fail to win a game (perder)",
+        "loose | not fitting tightly or not firmly fixed in place (suelto/a, flojo/a, holgado/a)",
+        "rip | to tear something quickly or forcibly (rasgar, romper)",
+        "pop | to make a short, sharp explosive sound, or to burst (explotar, chasquear)",
+        "crash | to collide violently with something, making a loud noise (chocar, estrellarse)",
+        "splash | to cause a liquid to fly about in drops, making a wet sound (salpicar)",
+        "bang | to strike something hard or make a sudden loud noise (dar un golpetazo, dar un portazo)",
+        "tick | to make a light, regularly repeated clicking sound like a clock (hacer tic-tac)",
+        "choice | an act of selecting between two or more possibilities (elección, opción)",
+        "choose | to select someone or something from a group of options (elegir, escoger)"
+      ]
     }
   ]
 }
