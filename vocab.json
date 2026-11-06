@@ -89,6 +89,44 @@
         "*single ticket | a ticket valid for a journey to a destination without returning (billete de ida)",
         "*souvenir | something kept as a reminder of a place visited (recuerdo, souvenir)"
       ]
+    },
+    {
+      "name": "Games",
+      "emoji": "🎲",
+      "level": [
+        1,
+        6
+      ],
+      "words": [
+        "assess | to evaluate or estimate the nature, ability, or quality of something (valorar)",
+        "boost | to encourage, improve, or increase something (despertar; estimular; promover)",
+        "cheat | to act dishonestly or unfairly in order to gain an advantage (hacer trampa/s; copiar (examen))",
+        "daydream | to indulge in a series of pleasant thoughts while awake (soñar despierto/a)",
+        "draw a conclusion | to reach a decision or judgment after considering information (sacar una conclusión)",
+        "figure out | to understand or solve something after thinking about it (entender; descubrir)",
+        "focus | to pay full attention to a particular object, task, or activity (centrarse)",
+        "gamble | to play games of chance for money or risk something on an uncertain outcome (apostar)",
+        "make an effort | to try hard to achieve or do something (hacer un esfuerzo)",
+        "read someone's mind | to know or guess what someone else is thinking (leerle el pensamiento a alguien)",
+        "recall | to bring a fact, event, or situation back into one's mind (recordar)",
+        "recognise | to identify someone or something from previous knowledge or experience (reconocer)",
+        "remind | to cause someone to remember something (recordar (algo a alguien))",
+        "suspect | to believe something to be true or likely without firm proof (sospechar)",
+        "take turns | to do something alternately or sequentially with others (turnarse)",
+        "think over | to consider a matter carefully before making a decision (pensar, considerar)",
+        "board game | a game played on a specially marked surface or board (juego de mesa)",
+        "*bluff | to deceive opponents about the strength of one's hand or position (farolear, marcarse un farol)",
+        "*dice | small cubes with numbered sides used to generate random numbers (dados)",
+        "*gambit | a risky opening move intended to gain a tactical advantage (gambito, jugada estratégica)",
+        "*shuffle | to mix cards or tiles into a random order (barajar)",
+        "*deal | to distribute cards, tiles, or resources to players (repartir)",
+        "*lose a turn | to forfeit your opportunity to act during a round (perder el turno)",
+        "*pass | to skip your action or roll without playing (pasar / tirada sin jugar)",
+        "*roll the dice | to throw dice to determine a random outcome or movement (lanzar los dados)",
+        "*deck | a stack of playing cards used in a game (mazo, montón de cartas)",
+        "*draw a card | to pick up a card from the deck (robar una carta)",
+        "*square | a designated spot on the board where pieces land or move (casilla)"
+      ]
     }
   ]
 }
