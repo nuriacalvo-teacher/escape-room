@@ -5,7 +5,9 @@
 (() => {
 const W = { mode: "teams", first: "", last: "", cls: "knight", lvl: "normal", off: new Set(), playing: false, topics: new Map(), bk: null, timer: null };
 try { W.off = new Set(JSON.parse(localStorage.getItem("wv_off") || "[]")); W.mode = localStorage.getItem("wv_mode") || "teams"; } catch (e) {}
-const persist = () => { try { localStorage.setItem("wv_off", JSON.stringify([...W.off])); localStorage.setItem("wv_mode", W.mode); } catch (e) {} };
+const persist = () => { try { localStorage.setItem("wv_off", JSON.stringify([...W.off])); localStorage.setItem("wv_mode", W.mode); localStorage.setItem("wv_cm", JSON.stringify({ cm: W.chmode, max: W.max })); } catch (e) {} };
+W.chmode = "topic"; W.max = 5;
+try { const c = JSON.parse(localStorage.getItem("wv_cm") || "null"); if (c) { W.chmode = c.cm === "skill" ? "skill" : "topic"; W.max = Math.min(8, Math.max(2, +c.max || 5)); } } catch (e) {}
 const BASE = { verb: "Irregular verbs", tense: "Present tenses", order: "Word order", habit: "Habits (used to)" };
 
 /* ---------- where does a question come from? ---------- */
@@ -19,9 +21,10 @@ function srcOf(q) {
   return { key: "b:" + q.r, label: BASE[q.r] || q.r, g: "gram" };
 }
 window.poolFor = function (roomId, level) {
-  const ok = q => !W.off.has(srcOf(q).key);
-  let p = BANK.filter(q => q.r === roomId && ok(q) && q.lv[0] <= level && level <= q.lv[1]);
-  if (p.length < 12) p = BANK.filter(q => q.r === roomId && ok(q) && q.lv[0] - 1 <= level && level <= q.lv[1] + 1);
+  const dyn = /^src:/.test(roomId), key = roomId.slice(4);
+  const ok = dyn ? q => srcOf(q).key === key : q => q.r === roomId && !W.off.has(srcOf(q).key);
+  let p = BANK.filter(q => ok(q) && q.lv[0] <= level && level <= q.lv[1]);
+  if (p.length < 12) p = BANK.filter(q => ok(q) && q.lv[0] - 1 <= level && level <= q.lv[1] + 1);
   return p;
 };
 const _merge = mergeItems;
@@ -175,12 +178,24 @@ function paint() {
       return `<div class="space-y-2"><p class="text-sm font-black uppercase tracking-widest text-slate-400">${G[g]}
         <button data-g="${g}:1" class="ml-3 underline text-emerald-300 normal-case">all</button><button data-g="${g}:0" class="ml-2 underline text-rose-300 normal-case">none</button></p>
         <div class="flex flex-wrap gap-2">${L.map(s => chip(!W.off.has(s.key), esc(s.label) + ` <span class="opacity-60">${s.n}</span>`, `data-i="${srcs.indexOf(s)}"`)).join("")}</div></div>`; }).join("") +
-    `<p class="text-sm font-bold text-emerald-300">${total} questions selected at this level. Chambers with fewer than 4 questions are skipped.</p>`;
+    `<div class="flex flex-wrap items-center gap-2 pt-1"><span class="text-sm font-black uppercase tracking-widest text-slate-400 mr-1">Chambers</span>` +
+    [["topic", "🧩 One per topic"], ["skill", "📦 By skill (classic 5)"]].map(([k, t]) => `<button data-cm="${k}" class="px-4 py-2 rounded-xl border-2 text-sm font-black ${W.chmode === k ? "bg-amber-500 text-slate-950 border-amber-300" : "bg-slate-950 text-slate-300 border-slate-700 hover:border-amber-400"}">${t}</button>`).join("") +
+    (W.chmode === "topic" ? `<select id="wvMax" class="bg-slate-900 border-2 border-slate-700 rounded-xl px-3 py-2 font-bold text-slate-200 outline-none">${[2, 3, 4, 5, 6, 7, 8].map(n => `<option value="${n}" ${n === W.max ? "selected" : ""}>up to ${n} chambers</option>`).join("")}</select>` : "") + `</div>` +
+    `<p class="text-sm font-bold text-emerald-300">${total} questions selected at this level · ${possibleCount()} topics ready to become chambers (4+ questions each). In “one per topic” mode every game picks up to ${W.max} of them at random.</p>`;
   const cc = card("wvContent", roomsCard, html);
   const set = f => { srcs.forEach(s => f(s) ? W.off.delete(s.key) : W.off.add(s.key)); persist(); renderSetup(); sfx.tick(); };
   cc.querySelectorAll("[data-i]").forEach(b => b.onclick = () => { const k = srcs[+b.dataset.i].key; W.off.has(k) ? W.off.delete(k) : W.off.add(k); persist(); renderSetup(); sfx.tick(); });
   cc.querySelectorAll("[data-g]").forEach(b => b.onclick = () => { const [g, v] = b.dataset.g.split(":"); srcs.filter(s => s.g === g).forEach(s => v === "1" ? W.off.delete(s.key) : W.off.add(s.key)); persist(); renderSetup(); });
   cc.querySelectorAll("[data-p]").forEach(b => b.onclick = () => { const p = b.dataset.p; set(s => p === "all" || (p === "voc" ? s.g === "voc" : s.g !== "voc")); });
+  cc.querySelectorAll("[data-cm]").forEach(b => b.onclick = () => { W.chmode = b.dataset.cm; persist(); renderSetup(); sfx.tick(); });
+  const mx = cc.querySelector("#wvMax"); if (mx) mx.onchange = e => { W.max = +e.target.value; persist(); renderSetup(); };
+  roomsCard.style.display = W.chmode === "topic" ? "none" : "";
+  $("roomInfo").textContent = "The keystone words change every game: you need them to build the master code.";
+  if (W.chmode === "topic") {
+    const pc = possibleCount(), n = Math.min(pc, W.max), teams = W.mode === "solo" ? 2 : S.teamCount, L = LENGTHS.find(x => x.id === S.length);
+    $("lengthInfo").textContent = (L.per * teams) + " questions per chamber · " + n + " chambers · escape clock " + L.clock + " min.";
+    $("setupStatus").innerHTML = "<span class='text-white font-black'>" + (W.mode === "solo" ? "Solo" : teams + " teams") + "</span> · " + LEVELS[S.level - 1] + " · <span class='text-amber-300'>" + n + " chambers from " + pc + " topics</span>";
+  }
   editor(roomsCard);
   /* optional player names per team */
   if (W.mode === "teams") Array.from($("teamList").children).forEach((row, i) => {
@@ -194,6 +209,58 @@ const _rs = renderSetup;
 window.renderSetup = function () { _rs(); try { paint(); } catch (e) { console.error(e); } };
 const _ss = saveSetup;
 window.saveSetup = function () { if (!W.playing) _ss(); };
+
+/* ---------- chambers: one per topic + random keystones ---------- */
+const KB = {
+  tense: [["OFTEN", "an adverb of frequency: it sits between usually and sometimes"], ["ALWAYS", "adverb: one hundred per cent of the time"], ["NEVER", "adverb: not at any time"], ["USUALLY", "adverb: most of the time"], ["ALREADY", "used with the present perfect for something done sooner than expected"], ["SINCE", "present perfect: it goes with a point in time, like Monday or 2019"], ["JUST", "a very short time ago, used with the present perfect"], ["YET", "used in negatives and questions with the present perfect"]],
+  order: [["DOES", "the auxiliary for a present simple question with he, she or it"], ["HAVE", "the auxiliary for a present perfect question with you or they"], ["SUBJECT", "who or what does the action: it goes before the verb"], ["WHERE", "the question word for a place"], ["WHEN", "the question word for a time"], ["WHICH", "the question word to choose between options"]],
+  habit: [["SELDOM", "a formal adverb that means almost never"], ["USUALLY", "a habit in the present: most of the time"], ["RARELY", "adverb: not very often"], ["NORMALLY", "adverb: in the usual way, most days"], ["USED", "the first word of a past habit that no longer happens: ___ to"]],
+  generic: [["VERB", "a word that shows an action"], ["NOUN", "a word for a person, place or thing"], ["PAST", "the time before now"], ["FUTURE", "the time that has not happened yet"], ["MODAL", "a verb like can, must or should"], ["TENSE", "the form of a verb that shows time"], ["CLAUSE", "a group of words with a subject and a verb"]]
+};
+const clearDyn = () => { for (let i = ROOMS.length - 1; i >= 0; i--) if (ROOMS[i].dyn) ROOMS.splice(i, 1); };
+const mostCommon = a => { const c = {}; a.forEach(x => c[x] = (c[x] || 0) + 1); return Object.keys(c).sort((x, y) => c[y] - c[x])[0]; };
+const okWord = w => /^[a-z]{4,9}$/i.test(w || "");
+const clueFor = it => { const m = / — (.+)$/.exec(it.tip || ""); return esc(m ? m[1] : (it.q || "").replace(/_{2,}/g, "…")); };
+function pickKey(items, used) {
+  const r = mostCommon(items.map(i => i.r)); let c = [];
+  if (r === "verb") c = BANK.filter(x => x.r === "verb" && x.t === "forms" && x.a && okWord(x.a[0][0]) && x.lv[0] <= S.level && S.level <= x.lv[1] + 1).map(x => ({ w: x.a[0][0], clue: "It is the past simple of <em>" + esc(x.q) + "</em>." }));
+  else if (r === "vocab") c = items.filter(x => okWord(x.w)).map(x => ({ w: x.w, clue: clueFor(x) }));
+  else c = (KB[r] || KB.generic).map(x => ({ w: x[0], clue: x[1] }));
+  c = c.filter(x => !used.has(x.w.toUpperCase()));
+  if (!c.length) c = KB.generic.map(x => ({ w: x[0], clue: x[1] })).filter(x => !used.has(x.w));
+  if (!c.length) c = [{ w: "VAULT", clue: "the room where the treasure is kept" }];
+  const k = c[Math.floor(Math.random() * c.length)]; used.add(k.w.toUpperCase()); return k;
+}
+const setKey = (room, k) => { room.keystone = k.w.toUpperCase(); room.riddle = k.w.length + " runes. The Guardian hid one word in this chamber — read the clue."; room.clue = k.clue; };
+const possibleCount = () => { const seen = new Set(); BANK.forEach(q => { const s = srcOf(q); if (!W.off.has(s.key)) seen.add(s.key); }); return [...seen].filter(k => poolFor("src:" + k, S.level).length >= 4).length; };
+function buildClassicRooms() {
+  clearDyn(); const used = new Set();
+  const rooms = W.chmode === "topic" ? buildTopicRooms() : buildClassicRooms();
+  rooms.forEach(id => setKey(ROOMS.find(r => r.id === id), pickKey(poolFor(id, S.level), used)));
+  return rooms;
+}
+function buildTopicRooms() {
+  clearDyn();
+  const m = new Map();
+  BANK.forEach(q => { const s = srcOf(q); if (W.off.has(s.key)) return; const e = m.get(s.key) || Object.assign({ items: [] }, s); e.items.push(q); m.set(s.key, e); });
+  const list = shuffle([...m.values()].filter(e => poolFor("src:" + e.key, S.level).length >= 4)).slice(0, W.max);
+  const used = new Set(), CE = { verb: "⚡", tense: "⏳", order: "🧱", habit: "🔁" };
+  return list.map((e, i) => {
+    const first = e.items.find(x => x.src && x.em);
+    const room = { id: "src:" + e.key, dyn: 1, color: PALETTE[i % PALETTE.length], skill: e.label,
+      name: e.g === "voc" ? "The " + e.label + " Vault" : "The " + e.label + " Chamber",
+      emoji: e.g === "voc" ? (first ? first.em : "📚") : e.g === "gram" ? (CE[e.items[0].r] || "📘") : "🧩",
+      story: "Everything about “" + e.label + "”. Answer well and the keystone appears rune by rune." };
+    setKey(room, pickKey(poolFor(room.id, S.level), used));
+    ROOMS.push(room); return room.id;
+  });
+}
+const _bq = buildQueue;
+window.buildQueue = function (roomId, n) {
+  const q = _bq(roomId, n);
+  if (!/^src:/.test(roomId)) return q;
+  return q.map((it, i) => it.r === "vocab" && it.t === "mcq" && it.w && i % 3 === 1 ? asWordPuzzle(it, ["scramble", "vowels", "listen"][Math.floor(i / 3) % 3]) : it);
+};
 
 /* ---------- starting and leaving ---------- */
 const _sg = startGame;
@@ -215,7 +282,7 @@ const _qs = quitToSetup;
 window.quitToSetup = function () {
   clearTimeout(W.timer);
   if (W.playing && W.bk) { S.teams = W.bk.teams; S.teamCount = W.bk.count; S.rooms = W.bk.rooms; }
-  W.playing = false; _qs();
+  W.playing = false; clearDyn(); _qs();
 };
 const _nt = nextTurn;
 window.nextTurn = function () {
