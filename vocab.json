@@ -1,11 +1,14 @@
 {
   "name": "Vocabulary topics",
-  "_howto": "Each topic is one block inside topics[]. Copy a block, change the name and the words. One word per line as text: word | clue. Put * before a word if it is harder (B2). Minimum 4 words per topic. Commas between blocks and between words, none after the last one.",
+  "_howto": "Each topic is one block inside topics[]. Words are written as: word | clue. Put * before a harder (B2) word. Minimum 4 words per topic.",
   "topics": [
     {
       "name": "Jobs",
       "emoji": "👩‍🏫",
-      "level": [2, 5],
+      "level": [
+        2,
+        5
+      ],
       "words": [
         "nurse | a person who looks after sick people in a hospital",
         "plumber | a person who repairs water pipes",
@@ -20,7 +23,10 @@
     {
       "name": "Technology",
       "emoji": "💻",
-      "level": [3, 6],
+      "level": [
+        3,
+        6
+      ],
       "words": [
         "screen | the flat part of a phone or computer where you see things",
         "keyboard | the set of keys you use to type",
@@ -35,7 +41,10 @@
     {
       "name": "Weather",
       "emoji": "⛅",
-      "level": [1, 4],
+      "level": [
+        1,
+        4
+      ],
       "words": [
         "cloudy | with a lot of clouds in the sky",
         "foggy | with thick white air close to the ground, so you can't see far",
@@ -44,6 +53,41 @@
         "freezing | extremely cold",
         "*drought | a long period with no rain",
         "*heatwave | a period of very hot weather"
+      ]
+    },
+    {
+      "name": "Travel",
+      "emoji": "🧳",
+      "level": [
+        1,
+        6
+      ],
+      "words": [
+        "airline | an organization that provides regular flights for passengers or cargo (línea aérea)",
+        "board | to get on a ship, aircraft, train, or bus (subir a bordo (de), embarcarse (en))",
+        "check in | to register upon arrival at an airport or hotel (facturar (aeropuerto))",
+        "crew | a group of people who work together, especially operating an aircraft or ship (tripulación)",
+        "delay | to cause something to happen at a later time than planned (retrasar)",
+        "fabulous | extraordinarily good, wonderful, or impressive (fabuloso/a, increíble)",
+        "flight attendant | a person whose job is to look after passengers on an aircraft (auxiliar de vuelo / cabina)",
+        "full board | a hotel arrangement that includes accommodation and all daily meals (pensión completa)",
+        "gate | the area in an airport where passengers wait to board their flight (puerta (de embarque))",
+        "half board | a hotel arrangement that includes accommodation, breakfast, and one main meal (media pensión)",
+        "high season | the period of the year when travel and tourism are at their peak (temporada alta)",
+        "in advance | ahead of time or before a specific event occurs (con antelación)",
+        "lively | full of life, energy, and activity (animado/a, bullicioso/a; alegre)",
+        "luxurious | extremely comfortable, elegant, and expensive (lujoso/a)",
+        "on a budget | with a limited amount of money to spend (con un presupuesto ajustado, sin mucho dinero)",
+        "overcrowded | containing too many people or things (atestado/a de gente)",
+        "rate | a fixed price or charge for a service or accommodation (tarifa, precio)",
+        "unforgettable | impossible to forget; memorable (inolvidable)",
+        "within walking distance | close enough to reach easily by walking (que se puede ir andando)",
+        "accommodation | a room or building in which someone may live or stay (alojamiento)",
+        "youth hostel | an inexpensive lodging facility geared toward young travelers (albergue juvenil)",
+        "*platform | the area next to railway tracks where passengers get on or off trains (andén)",
+        "*return ticket | a ticket that allows travel to a destination and back again (billete de ida y vuelta)",
+        "*single ticket | a ticket valid for a journey to a destination without returning (billete de ida)",
+        "*souvenir | something kept as a reminder of a place visited (recuerdo, souvenir)"
       ]
     }
   ]
