@@ -127,6 +127,45 @@
         "*draw a card | to pick up a card from the deck (robar una carta)",
         "*square | a designated spot on the board where pieces land or move (casilla)"
       ]
+    },
+    {
+      "name": "Clothes",
+      "emoji": "👗",
+      "level": [
+        1,
+        6
+      ],
+      "words": [
+        "brand | a type of product manufactured by a particular company under a particular name (marca)",
+        "clothing | clothes collectively or items worn to cover the body (ropa)",
+        "compliment | a polite expression of praise or admiration (cumplido, halago)",
+        "deliver | to bring or transport goods to a customer or location (hacer envíos)",
+        "frames | the rigid structure surrounding the lenses of a pair of glasses (montura (gafas))",
+        "glamorous | attractive, exciting, and stylish in appearance (glamuroso/a, elegante)",
+        "hoodie | a casual sweatshirt with a hood attached (sudadera con capucha)",
+        "layer | a thickness of material or clothing worn over or under another (capa)",
+        "plain | simple and without any pattern, print, or extra decoration (sencillo/a; liso/a)",
+        "price tag | a label attached to an item showing how much it costs (etiqueta (del precio))",
+        "range | a variety of different items or styles offered by a brand (variedad)",
+        "ripped | having tear marks, slits, or cuts in the fabric (rasgado/a)",
+        "sleeve | the part of a garment that covers all or part of the arm (manga)",
+        "sleeveless | designed without sleeves to leave the arms bare (sin mangas)",
+        "stylish | fashionable, elegant, and appealing in appearance (elegante, con estilo)",
+        "suit | to look good on someone or enhance their appearance (sentar bien, favorecer)",
+        "fit | to be the right size and shape for someone's body (quedar bien de talla)",
+        "swap | to exchange one item of clothing for another (cambiar)",
+        "zip | a fastener consisting of two rows of interlocking teeth (cremallera)",
+        "*do up | to fasten a piece of clothing such as a zip, button, or belt (abrochar, subir la cremallera)",
+        "*dress up | to wear formal, elegant, or special clothes for an event (vestirse de etiqueta, arreglarse)",
+        "*fold | to bend clothes neatly so that one part covers another (doblar la ropa)",
+        "*go with | to combine well with another item of clothing in style or color (combinar con, ir bien con)",
+        "*iron | to make clothes smooth using a heated iron (planchar)",
+        "*match | to have the same color, pattern, or style as another piece of clothing (combinar, hacer juego)",
+        "*put on | to place a garment on your body to wear it (ponerse ropa)",
+        "*take off | to remove a piece of clothing from your body (quitarse ropa)",
+        "*try on | to put on a garment to check if it fits or looks good before buying (probarse ropa)",
+        "*undo | to unfasten the buttons, zip, or straps of a garment (desabrochar)"
+      ]
     }
   ]
 }
