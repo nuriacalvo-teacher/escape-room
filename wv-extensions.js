@@ -306,7 +306,7 @@ function botPlay(t, q) {
   document.querySelectorAll("#qArea button, #qArea input, #powerRow button").forEach(e => e.disabled = true);
   $("powerRow").innerHTML = "<span class='text-lg font-black text-slate-400 animate-pulse'>🤖 The machine is thinking…</span>";
   /* the machine never fails: its level is its SPEED. The sooner it answers, the more points it earns. */
-  const R = { easy: [.55, .8], normal: [.3, .5], hard: [.1, .22] }[W.lvl] || [.3, .5];
+  const R = { easy: [.4, .6], normal: [.2, .35], hard: [.05, .18] }[W.lvl] || [.2, .35];
   const f = R[0] + Math.random() * (R[1] - R[0]);          /* share of the time already used */
   const noLimit = !S.qTime, T = noLimit ? 20 : S.qTime;
   W.timer = setTimeout(() => {
